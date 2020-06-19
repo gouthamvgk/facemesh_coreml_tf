@@ -3,3 +3,4 @@
 *.ipynb_checkpoints
 *.tar.gz
 *.ipynb
+temp*

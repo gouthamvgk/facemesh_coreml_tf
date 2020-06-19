@@ -11,6 +11,10 @@ def get_clean_name(string):
         return string.split('/')[0] + '/' + 'Bias'
     elif "lu" in string.lower():
         return string.split('/')[0] + '/' + "Alpha"
+    elif "kernel" in string.lower():
+        return string.split('/')[0] + '/' + "Kernel"
+    elif "bias" in string.lower():
+        return string.split('/')[0] + '/' + "Bias"
     else:
         raise ValueError("Input string not understood")
         
@@ -44,3 +48,17 @@ def restore_variables(model,tf_lite_mapping, data_format):
         restored += 1
     print("Restored {} variables from tflite file".format(restored))
     print("Restore {} float values".format(total_params))
+    
+def xywh_to_tlbr(boxes, y_first=False):
+    """
+    boxes - (N, 4)
+    """
+    final_boxes = boxes.copy()
+    if not y_first:
+        final_boxes[:, 0:2] = boxes[:, 0:2] - (boxes[:, 2:4]/2)
+        final_boxes[:, 2:4] = boxes[:, 0:2] + (boxes[:, 2:4]/2)
+    else:
+        final_boxes[:, 0:2] = boxes[:, [1,0]] - (boxes[:, [3,2]]/2)
+        final_boxes[:, 2:4] = boxes[:, [1,0]] + (boxes[:, [3,2]]/2)
+    return final_boxes
+    

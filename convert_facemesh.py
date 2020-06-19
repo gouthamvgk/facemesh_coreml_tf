@@ -1,4 +1,4 @@
-#This file takes the tflite model of facemesh and converts it to coreml format
+#This file takes the tflite model of facemesh and converts it to coreml, tf format
 import tensorflow as tf
 import numpy as np
 from tensorflow.keras.layers import *
@@ -10,7 +10,7 @@ from PIL import Image
 import matplotlib.pyplot as plt
 print(tf.__version__) 
 
-tflite_path = "./face_mesh.tflite"
+tflite_path = "./tflite_models/face_mesh.tflite"
 interpreter = tf.lite.Interpreter(model_path=tflite_path)
 interpreter.allocate_tensors()
 tf_lite_mapping = {}
@@ -19,7 +19,7 @@ for i in interpreter.get_tensor_details():
         tf_lite_mapping[i['name']] = interpreter.get_tensor(i["index"])
         
 
-def create_facenet(input_shape, batch_size = 1, output_dim=1404, data_format="channels_first"):
+def create_facenet(input_shape, batch_size = 1, output_dim=1404, data_format="channels_last"):
     if data_format == "channels_first":
         shared_axes = [2,3]
     else:
@@ -63,15 +63,15 @@ def create_facenet(input_shape, batch_size = 1, output_dim=1404, data_format="ch
 data_format = "channels_last"
 facemesh_tf = create_facenet((192,192,3), batch_size=1, output_dim=1404, data_format=data_format)
 restore_variables(facemesh_tf, tf_lite_mapping, data_format)
-facemesh_tf.save("facemesh_tf.h5")
+facemesh_tf.save("./keras_models/facemesh_tf.h5")
 
 tf.keras.backend.clear_session()
-coreml_tf = tf.keras.models.load_model("facemesh_tf.h5")
+coreml_tf = tf.keras.models.load_model("./keras_models/facemesh_tf.h5")
 inp_node = coreml_tf.inputs[0].name[:-2].split('/')[-1]
 out_node = coreml_tf.outputs[0].name[:-2].split('/')[-1]
 print(inp_node, out_node)
 facemesh_coreml = tfcoreml.convert(
-    "facemesh_tf.h5",
+    "./keras_models/facemesh_tf.h5",
     output_feature_names = [out_node],
     input_name_shape_dict = {inp_node: list(coreml_tf.inputs[0].shape)},
     image_input_names = [inp_node],
@@ -85,13 +85,13 @@ facemesh_coreml._spec.description.output[0].type.multiArrayType.shape.extend([1,
 facemesh_coreml._spec.description.output[0].name = "points_confidence"
 facemesh_coreml._spec.neuralNetwork.layers[-1].name = "points_confidence"
 facemesh_coreml._spec.neuralNetwork.layers[-1].output[0] = "points_confidence" #giving appropriate name for output nodes
-facemesh_coreml.save("facemesh.mlmodel") #currently this coreml model doesnt run on GPU due to coreml bug
+facemesh_coreml.save("./coreml_models/facemesh.mlmodel") #currently this coreml model doesnt run on GPU due to coreml bug
 
 inp_image = Image.open("sample.jpg")
 inp_image = inp_image.resize((192,192))
 inp_image_np = np.array(inp_image).astype(np.float32)
 inp_image_np = np.expand_dims((inp_image_np/127.5) - 1, 0)
-facemesh_coreml = coremltools.models.MLModel("facemesh.mlmodel")
+facemesh_coreml = coremltools.models.MLModel("./coreml_models/facemesh.mlmodel")
 
 print("Checking model sanity across tensorflow, tflite and coreml")
 tf_output = coreml_tf.predict(inp_image_np)
@@ -106,5 +106,5 @@ print("CoreMl output mean: {}, {}".format(coreml_output[:, :-1].mean(), coreml_o
 detections = coreml_output[:, :-1].reshape(468, 3)[:, :2]
 plt.imshow(inp_image)
 plt.scatter(detections[:, 0], detections[:, 1], s = 1.0, marker="+")
-plt.savefig("sample_out.jpg")
+plt.savefig("facemesh_out.jpg")
 plt.show()
