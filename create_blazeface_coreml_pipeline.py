@@ -160,6 +160,8 @@ pipeline = Pipeline(input_features, output_features)
 pipeline.add_model(blazeface_coreml._spec)
 pipeline.add_model(nms_model._spec)
 pipeline.spec.description.input[0].ParseFromString(blazeface_coreml._spec.description.input[0].SerializeToString())
+pipeline.spec.description.input[1].type.isOptional = True
+pipeline.spec.description.input[2].type.isOptional = True
 pipeline.spec.description.output[0].ParseFromString(nms_model._spec.description.output[0].SerializeToString())
 pipeline.spec.description.output[1].ParseFromString(nms_model._spec.description.output[1].SerializeToString())
 
