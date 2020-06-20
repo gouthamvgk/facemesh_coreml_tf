@@ -102,7 +102,7 @@ def process_detections(results, orig_dim, max_boxes=5, score_threshold=0.75, iou
     orig_points = convert_to_orig_points(filter_boxes, orig_dim, 128)
     landmarks_xywh = orig_points.copy()
     landmarks_xywh[:, 2:4] += (landmarks_xywh[:, 2:4] * pad_ratio).astype(np.int32) #adding some padding around detection for landmark detection step.
-    landmarks_xywh[:, 1:2] -= (landmarks_xywh[:, 3:4]*0.07).astype(np.int32) #adjusting center_y since the detector outputs boxes from forehead and to account for that bias
+    landmarks_xywh[:, 1:2] -= (landmarks_xywh[:, 3:4]*0.08).astype(np.int32) #adjusting center_y since the detector outputs boxes from forehead and to account for that bias
     final_boxes = xywh_to_tlbr(orig_points).astype(np.int32)
     return final_boxes, landmarks_xywh
 

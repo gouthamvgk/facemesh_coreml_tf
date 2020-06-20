@@ -7,6 +7,13 @@ import time
 video = cv2.VideoCapture(0)
 blazeface_tf = tf.keras.models.load_model("./keras_models/blazeface_tf.h5")
 facemesh_tf = tf.keras.models.load_model("./keras_models/facemesh_tf.h5")
+mappings = open("landmark_contours.txt").readlines()
+contours = {}
+for line in mappings:
+    line = line.strip().split(" ")
+    contours[line[0]] = [int(i) for i in line[1:]]
+
+    
 def predict_frame(orig_frame):
     orig_h, orig_w = orig_frame.shape[0:2]
     frame = create_letterbox_image(orig_frame, 128)
@@ -22,15 +29,18 @@ def predict_frame(orig_frame):
     assert len(final_boxes) == len(final_landmarks)
     for (bx,land) in zip(final_boxes, final_landmarks):
         cv2.rectangle(orig_frame, (bx[0], bx[1]), (bx[2], bx[3]), (255, 0, 255), 1)
+        cv2.drawContours(orig_frame, land[np.newaxis, contours["face"], :], -1, (255, 0, 0), thickness=2)
         for pt in land:
             cv2.circle(orig_frame, (pt[0], pt[1]), 1, (0, 0, 255), -1)
     return orig_frame
     
 while True:
     ret, frame = video.read() 
-    cv2.imshow("image", predict_frame(frame))
+    if ret:
+        cv2.imshow("image", predict_frame(frame))
+    else:
+        break
     if cv2.waitKey(1) & 0xFF == ord('q'): 
         break
-
 video.release()
 cv2.destroyAllWindows()
