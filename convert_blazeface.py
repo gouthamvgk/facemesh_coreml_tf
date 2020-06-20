@@ -83,7 +83,7 @@ grid_8 = np.array(np.meshgrid(np.arange(0, 1, 1/8), np.arange(0, 1, 1/8))).trans
 grid_8 = np.tile(np.expand_dims(grid_8, 2), 6)
 grid_16 = np.array(np.meshgrid(np.arange(0, 1, 1/16), np.arange(0, 1, 1/16))).transpose((1,2, 0)) + 1/32
 grid_16 = np.tile(np.expand_dims(grid_16, 2), 6)
-blazeface_tf = create_blazeface((128, 128, 3),grid_8, grid_16, batch_size=1, data_format=data_format)
+blazeface_tf = create_blazeface((128, 128, 3),grid_8, grid_16, batch_size=None, data_format=data_format)
 restore_variables(blazeface_tf, tf_lite_mapping, data_format)
 blazeface_tf.save("./keras_models/blazeface_tf.h5")
 
@@ -95,7 +95,7 @@ print(inp_node, out_node)
 blazeface_coreml = tfcoreml.convert(
     "./keras_models/blazeface_tf.h5",
     output_feature_names = [out_node],
-    input_name_shape_dict = {inp_node: [1,128, 128, 3]},
+    input_name_shape_dict = {inp_node: [1, *list(coreml_tf.inputs[0].shape[1:])]},
     image_input_names = [inp_node],
     image_scale = 1/127.5,
     red_bias = -1,

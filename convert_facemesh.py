@@ -61,7 +61,7 @@ def create_facenet(input_shape, batch_size = 1, output_dim=1404, data_format="ch
     return tf.keras.Model(inputs=[input_tensor], outputs=[final_out])
 
 data_format = "channels_last"
-facemesh_tf = create_facenet((192,192,3), batch_size=1, output_dim=1404, data_format=data_format)
+facemesh_tf = create_facenet((192,192,3), batch_size=None, output_dim=1404, data_format=data_format)
 restore_variables(facemesh_tf, tf_lite_mapping, data_format)
 facemesh_tf.save("./keras_models/facemesh_tf.h5")
 
@@ -73,7 +73,7 @@ print(inp_node, out_node)
 facemesh_coreml = tfcoreml.convert(
     "./keras_models/facemesh_tf.h5",
     output_feature_names = [out_node],
-    input_name_shape_dict = {inp_node: list(coreml_tf.inputs[0].shape)},
+    input_name_shape_dict = {inp_node: [1, *list(coreml_tf.inputs[0].shape[1:])]},
     image_input_names = [inp_node],
     image_scale = 1/127.5,
     red_bias = -1,
